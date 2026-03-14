@@ -422,3 +422,5 @@ FodyWeavers.xsd
 *.user
 *.userosscache
 *.sln.docstates
+
+AuditTrailX.API/appsettings.Development.json
