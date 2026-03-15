@@ -13,12 +13,17 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\AuditTrailX.Data\AuditTrailX.Data.csproj" />
       <ProjectReference Include="..\AuditTrailX.Service\AuditTrailX.Service.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Controllers\" />
+      <Folder Include="Middleware\" />
     </ItemGroup>
 
 </Project>
