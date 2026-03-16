@@ -36,6 +36,7 @@ public static class DataSeeder
                 OldValues = """{"email":"kamer@old.com"}""",
                 NewValues = """{"email":"kamer@new.com"}""",
                 IpAddress = "192.168.1.2",
+                UserAgent = "Mozilla/5.0",
                 CorrelationId = Guid.NewGuid().ToString()
             },
             new()
@@ -49,6 +50,76 @@ public static class DataSeeder
                 IpAddress = "10.0.0.1",
                 // şüpheli olarak işaretlenmiş bir kayıt ekliyorum
                 IsSuspicious = true,
+                UserAgent = "PostmanRuntime/7.43.0",
+                CorrelationId = Guid.NewGuid().ToString()
+            },
+            new()
+            {
+                ActorId = "user-003",
+                ActorName = "Ayşe Demir",
+                ActorType = ActorType.User,
+                ActionType = ActionType.Created,
+                EntityName = "Order",
+                EntityId = "ord-101",
+                NewValues = """{"orderNo":"ORD-101","status":"Created"}""",
+                IpAddress = "192.168.1.15",
+                UserAgent = "Mozilla/5.0",
+                CorrelationId = Guid.NewGuid().ToString()
+            },
+            new()
+            {
+                ActorId = "user-004",
+                ActorName = "Zeynep Kaya",
+                ActorType = ActorType.User,
+                ActionType = ActionType.Logout,
+                EntityName = "Session",
+                EntityId = "sess-2",
+                IpAddress = "192.168.1.20",
+                UserAgent = "Mozilla/5.0",
+                CorrelationId = Guid.NewGuid().ToString()
+            },
+            new()
+            {
+                ActorId = "user-005",
+                ActorName = "Ahmet Yılmaz",
+                ActorType = ActorType.User,
+                ActionType = ActionType.PasswordChanged,
+                EntityName = "AccountSecurity",
+                EntityId = "acc-sec-5",
+                OldValues = """{"password":"ahmet123"}""",
+                NewValues = """{"password":"ahmet456"}""",
+                IpAddress = "172.16.0.5",
+                UserAgent = "Mozilla/5.0",
+                IsSuspicious = true,
+                CorrelationId = Guid.NewGuid().ToString()
+            },
+            new()
+            {
+                ActorId = "admin-002",
+                ActorName = "Selin Aksoy",
+                ActorType = ActorType.User,
+                ActionType = ActionType.PermissionChanged,
+                EntityName = "UserPermission",
+                EntityId = "perm-22",
+                OldValues = """{"permission":"ReadOnly"}""",
+                NewValues = """{"permission":"FullAccess"}""",
+                IpAddress = "10.0.0.12",
+                UserAgent = "PostmanRuntime/7.43.0",
+                IsSuspicious = true,
+                CorrelationId = Guid.NewGuid().ToString()
+            },
+            new()
+            {
+                ActorId = "admin-003",
+                ActorName = "Burak Arslan",
+                ActorType = ActorType.User,
+                ActionType = ActionType.RoleAssigned,
+                EntityName = "UserRole",
+                EntityId = "role-77",
+                OldValues = """{"role":"User"}""",
+                NewValues = """{"role":"Manager"}""",
+                IpAddress = "10.0.0.21",
+                UserAgent = "Mozilla/5.0",
                 CorrelationId = Guid.NewGuid().ToString()
             }
         };
