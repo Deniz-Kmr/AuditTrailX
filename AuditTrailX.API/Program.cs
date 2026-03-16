@@ -1,5 +1,6 @@
 using AuditTrailX.API.Extensions;
 using AuditTrailX.API.Middleware;
+using AuditTrailX.Data.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,4 +27,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// uygulama ayağa kalkarken seed data varsa ekliyorum
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AuditTrailXDbContext>();
+    await DataSeeder.SeedAsync(db);
+}
+
 app.Run();
