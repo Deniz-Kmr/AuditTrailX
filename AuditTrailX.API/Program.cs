@@ -1,31 +1,29 @@
-using AuditTrailX.Data.Context;
-using Microsoft.EntityFrameworkCore;
+using AuditTrailX.API.Extensions;
+using AuditTrailX.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// burada dbcontexti postgres bağlantı cümlesi ile containera ekliyorum
-builder.Services.AddDbContext<AuditTrailXDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// burada controller ve swagger servislerini ekliyorum
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddApplicationServices();
+builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddSwaggerWithAuth();
 
 var app = builder.Build();
 
-// burada development ortamında swaggerı açıyorum
+// middleware sırasına dikkat edelim...
+// önce hata yakalama sonra correlation id sonra auth gelmeli
+app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<CorrelationIdMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
-// burada controller endpointlerini mapliyorum
 app.MapControllers();
-
 app.Run();
