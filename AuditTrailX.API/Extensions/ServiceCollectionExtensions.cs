@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 namespace AuditTrailX.API.Extensions;
 
@@ -68,6 +69,10 @@ public static class ServiceCollectionExtensions
                 Version = "v1",
                 Description = "Centralized Audit Logging Service"
             });
+            
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            c.IncludeXmlComments(xmlPath);
 
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
