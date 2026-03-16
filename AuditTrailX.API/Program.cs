@@ -10,6 +10,17 @@ builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerWithAuth();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWeb", policy =>
+    {
+        // sadece local dashboarda izin veriyorum
+        policy.WithOrigins("http://localhost:3000", "http://127.0.0.1:5500")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // middleware sırasına dikkat edelim...
@@ -23,6 +34,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowWeb");
 app.UseAuthentication();
 app.UseAuthorization();
 

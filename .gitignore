@@ -424,3 +424,4 @@ FodyWeavers.xsd
 *.sln.docstates
 
 AuditTrailX.API/appsettings.Development.json
+.DS_Store
