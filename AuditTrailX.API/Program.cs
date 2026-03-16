@@ -14,8 +14,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowWeb", policy =>
     {
-        // sadece local dashboarda izin veriyorum
-        policy.WithOrigins("http://localhost:3000", "http://127.0.0.1:5500")
+        // sadece local dashboard'a izin veriyorum
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://127.0.0.1:5500",
+                "http://localhost:5119",
+                "https://localhost:5119",
+                "null")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
