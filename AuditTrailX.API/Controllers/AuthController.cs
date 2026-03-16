@@ -14,7 +14,9 @@ public class AuthController : ControllerBase
 
     public AuthController(IConfiguration config) => _config = config;
 
-    
+    /// <summary>
+    /// Test amaçlı JWT token üretir Productionda kullanma dikkat et deniz..
+    /// </summary>
     // bu endpoint kullanıcı adı ve şifre alır doğrular ve geçerliyse jwt token döner
     [HttpPost("token")]
     public IActionResult GetToken([FromBody] TokenRequest request)
