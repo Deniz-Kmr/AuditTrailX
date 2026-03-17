@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AuditTrailX — Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#e8edf2;color:#1a202c;font-size:14px}
+
+        nav{background:#1e293b;padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+        .nav-left{display:flex;align-items:center;gap:12px}
+        .nav-logo{width:30px;height:30px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px}
+        .nav-title{font-size:15px;font-weight:700;color:#f1f5f9}
+        .nav-sub{font-size:11px;color:#64748b;margin-left:4px}
+        .nav-right{display:flex;align-items:center;gap:12px}
+        .live-badge{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:99px;padding:4px 12px;font-size:11px;font-weight:500;color:#22c55e}
+        .live-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .nav-tabs{display:flex;gap:4px}
+        .nav-tab{background:transparent;border:none;color:#94a3b8;font-size:13px;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s}
+        .nav-tab:hover{background:rgba(255,255,255,.08);color:#f1f5f9}
+        .nav-tab.active{background:rgba(59,130,246,.2);color:#60a5fa}
+
+        .container{max-width:1400px;margin:0 auto;padding:1.5rem 2rem}
+        .page-title{margin-bottom:1.25rem}
+        .page-title h1{font-size:20px;font-weight:700;color:#0f172a}
+        .page-title p{font-size:12px;color:#64748b;margin-top:3px}
+
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem}
+        .stat{background:#fff;border:1px solid #dde3ec;border-radius:10px;padding:1rem 1.25rem;display:flex;align-items:center;gap:14px}
+        .stat-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+        .si-blue{background:#eff6ff}.si-red{background:#fff1f2}.si-amber{background:#fffbeb}.si-green{background:#f0fdf4}
+        .stat-info .s-label{font-size:11px;color:#94a3b8;margin-bottom:3px}
+        .stat-info .s-value{font-size:22px;font-weight:700;color:#0f172a;line-height:1}
+        .s-value.red{color:#ef4444}.s-value.green{color:#22c55e}.s-value.blue{color:#3b82f6}
+
+        .tabs-content{display:none}.tabs-content.active{display:block}
+        .main-grid{display:grid;grid-template-columns:1fr 300px;gap:14px}
+        .card{background:#fff;border:1px solid #dde3ec;border-radius:10px;overflow:hidden}
+        .card-header{padding:.9rem 1.25rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+        .card-title{font-size:13px;font-weight:600;color:#0f172a}
+        .card-sub{font-size:12px;color:#94a3b8}
+
+        .filters{padding:.75rem 1.25rem;background:#fafbfc;border-bottom:1px solid #f1f5f9;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .filters input,.filters select{background:#fff;border:1px solid #dde3ec;border-radius:7px;color:#1a202c;font-size:12px;padding:5px 9px;height:32px;outline:none;transition:border .15s}
+        .filters input:focus,.filters select:focus{border-color:#3b82f6}
+        .filters input::placeholder{color:#cbd5e1}
+        .btn-f{background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:5px 14px;font-size:12px;font-weight:500;cursor:pointer;height:32px}
+        .btn-f:hover{background:#2563eb}
+        .btn-r{background:#fff;color:#64748b;border:1px solid #dde3ec;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;height:32px}
+        .btn-r:hover{background:#f8fafc}
+
+        table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+        thead tr{background:#fafbfc}
+        th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f1f5f9}
+        td{padding:11px 12px;border-bottom:1px solid #f8fafc;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        tbody tr{cursor:pointer;transition:background .1s}
+        tbody tr:hover td{background:#f8fafc}
+        tbody tr:last-child td{border-bottom:none}
+        tbody tr.susp-row td{background:#fff8f8}
+        tbody tr.susp-row:hover td{background:#fff1f1}
+
+        .badge{display:inline-flex;align-items:center;font-size:10px;padding:3px 9px;border-radius:99px;font-weight:600}
+
+        .actor-cell{display:flex;align-items:center;gap:7px}
+        .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+
+        .pagination{padding:9px 12px;border-top:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#94a3b8;background:#fafbfc}
+        .page-btns{display:flex;gap:5px}
+        .page-btn{background:#fff;border:1px solid #dde3ec;border-radius:5px;padding:4px 10px;font-size:11px;color:#374151;cursor:pointer}
+        .page-btn:hover{background:#f1f5f9}
+        .page-btn:disabled{opacity:.4;cursor:default}
+
+        .chart-wrap{padding:1rem}
+        .legend{padding:0 1rem 1rem;display:flex;flex-direction:column;gap:7px}
+        .legend-item{display:flex;align-items:center;font-size:11px;gap:6px}
+        .legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+        .legend-bar-wrap{flex:1;background:#f1f5f9;border-radius:99px;height:4px;overflow:hidden}
+        .legend-bar{height:4px;border-radius:99px}
+        .legend-count{font-weight:600;color:#0f172a;min-width:16px;text-align:right}
+
+        .live-log-wrap{background:#0d1117;border-radius:10px;overflow:hidden;border:1px solid #2d3748}
+        .live-log-header{background:#161b22;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2d3748}
+        .live-log-title{font-size:12px;font-weight:600;color:#e6edf3;display:flex;align-items:center;gap:8px}
+        .term-dots{display:flex;gap:5px}
+        .td-btn{width:11px;height:11px;border-radius:50%}
+        .td-red{background:#ff5f57}.td-amber{background:#febc2e}.td-green{background:#28c840}
+        .live-log-body{height:400px;overflow-y:auto;padding:.75rem 1rem;font-family:'SF Mono',Monaco,monospace;font-size:11px;line-height:1.8}
+        .live-log-body::-webkit-scrollbar{width:4px}
+        .live-log-body::-webkit-scrollbar-track{background:#0d1117}
+        .live-log-body::-webkit-scrollbar-thumb{background:#2d3748;border-radius:2px}
+        .log-line{display:flex;gap:10px;animation:fadeIn .3s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+        .log-time{color:#484f58;flex-shrink:0;min-width:65px}
+        .log-actor{color:#79c0ff;flex-shrink:0;min-width:120px}
+        .log-entity{color:#8b949e}
+        .log-susp{color:#f85149;font-weight:700}
+        .log-idle{color:#484f58;font-style:italic}
+
+        .susp-panel{display:flex;flex-direction:column;gap:12px}
+        .susp-card{background:#fff;border:1px solid #dde3ec;border-radius:10px;overflow:hidden}
+        .susp-header{background:#fff1f2;padding:.85rem 1.25rem;border-bottom:1px solid #fecdd3;display:flex;align-items:center;justify-content:space-between}
+        .susp-header h3{font-size:13px;font-weight:600;color:#dc2626}
+        .susp-count{background:#ef4444;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+        .susp-list{display:flex;flex-direction:column}
+        .susp-item{padding:.9rem 1.25rem;border-bottom:1px solid #f8fafc;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background .1s}
+        .susp-item:hover{background:#fafbfc}
+        .susp-item:last-child{border-bottom:none}
+        .susp-avatar{width:36px;height:36px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+        .susp-info{flex:1;min-width:0}
+        .susp-name{font-size:13px;font-weight:600;color:#0f172a;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .susp-detail{font-size:11px;color:#64748b;margin-top:3px}
+        .susp-time{font-size:11px;color:#94a3b8;flex-shrink:0}
+        .susp-badge{display:inline-flex;align-items:center;background:#fff1f2;border:1px solid #fecdd3;color:#dc2626;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px}
+        .risk-score{display:flex;align-items:center;gap:6px;margin-top:6px}
+        .risk-bar-wrap{flex:1;background:#f1f5f9;border-radius:99px;height:5px;overflow:hidden;max-width:200px}
+        .risk-bar{height:5px;border-radius:99px}
+        .risk-label{font-size:10px;color:#94a3b8}
+        .risk-high{color:#ef4444;font-weight:600;font-size:10px}
+        .risk-mid{color:#f59e0b;font-weight:600;font-size:10px}
+
+        .empty{text-align:center;padding:2.5rem;color:#94a3b8;font-size:12px}
+
+        .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+        .overlay.open{display:flex}
+        .modal{background:#fff;border-radius:14px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+        .modal-top{padding:1.25rem 1.5rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between}
+        .modal-top h3{font-size:15px;font-weight:700;color:#0f172a}
+        .modal-close{background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+        .modal-close:hover{background:#f1f5f9;color:#374151}
+        .modal-body{padding:1.25rem 1.5rem}
+        .detail-group{margin-bottom:1rem}
+        .detail-group-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:8px}
+        .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .detail-item{background:#f8fafc;border-radius:8px;padding:10px 12px}
+        .d-label{font-size:10px;color:#94a3b8;margin-bottom:3px}
+        .d-value{font-size:13px;font-weight:500;color:#0f172a;word-break:break-all}
+        .json-block{background:#0f172a;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:#7dd3fc;white-space:pre-wrap;word-break:break-all;margin-top:6px}
+        .susp-banner{background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:#dc2626;font-weight:500;margin-bottom:1rem}
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-left">
+        <div class="nav-logo">AT</div>
+        <div>
+            <span class="nav-title">AuditTrailX</span>
+            <span class="nav-sub">Merkezi Denetim Sistemi</span>
+        </div>
+    </div>
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('logs', this)">📋 Loglar</button>
+        <button class="nav-tab" onclick="switchTab('suspicious', this)">⚠️ Şüpheli</button>
+        <button class="nav-tab" onclick="switchTab('live', this)">⚡ Canlı</button>
+    </div>
+    <div class="nav-right">
+        <div class="live-badge"><span class="live-dot"></span><span id="status-text">Bağlanıyor...</span></div>
+        <span id="last-update" style="font-size:11px;color:#64748b">—</span>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-title">
+        <h1>Denetim Kayıtları</h1>
+        <p>Sistemde gerçekleşen tüm işlemleri buradan izleyebilirsin</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat"><div class="stat-icon si-blue">📋</div><div class="stat-info"><div class="s-label">Toplam Kayıt</div><div class="s-value blue" id="st-total">—</div></div></div>
+        <div class="stat"><div class="stat-icon si-red">⚠️</div><div class="stat-info"><div class="s-label">Şüpheli İşlem</div><div class="s-value red" id="st-susp">—</div></div></div>
+        <div class="stat"><div class="stat-icon si-amber">🔔</div><div class="stat-info"><div class="s-label">Okunmamış</div><div class="s-value" id="st-unread">—</div></div></div>
+        <div class="stat"><div class="stat-icon si-green">⚡</div><div class="stat-info"><div class="s-label">Son 24 Saat</div><div class="s-value green" id="st-today">—</div></div></div>
+    </div>
+
+    <div class="tabs-content active" id="tab-logs">
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">İşlem Geçmişi</span>
+                    <span class="card-sub" id="result-count">yükleniyor...</span>
+                </div>
+                <div class="filters">
+                    <input type="text" id="f-actor" placeholder="Kişi ara..." style="width:120px" />
+                    <input type="text" id="f-entity" placeholder="Varlık adı..." style="width:120px" />
+                    <select id="f-action" style="width:145px">
+                        <option value="">Tüm işlemler</option>
+                        <option value="Created">Oluşturuldu</option>
+                        <option value="Updated">Güncellendi</option>
+                        <option value="Deleted">Silindi</option>
+                        <option value="Login">Giriş Yapıldı</option>
+                        <option value="Logout">Çıkış Yapıldı</option>
+                        <option value="PermissionChanged">İzin Değişti</option>
+                        <option value="PasswordChanged">Şifre Değişti</option>
+                        <option value="RoleAssigned">Rol Atandı</option>
+                    </select>
+                    <select id="f-susp" style="width:110px">
+                        <option value="">Tümü</option>
+                        <option value="true">Şüpheli</option>
+                        <option value="false">Normal</option>
+                    </select>
+                    <button class="btn-f" onclick="applyFilters()">Filtrele</button>
+                    <button class="btn-r" onclick="resetFilters()">Temizle</button>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width:20%">Kim Yaptı</th>
+                        <th style="width:14%">Ne Yaptı</th>
+                        <th style="width:15%">Neye Yaptı</th>
+                        <th style="width:12%">Kayıt ID</th>
+                        <th style="width:12%">IP Adresi</th>
+                        <th style="width:15%">Correlation ID</th>
+                        <th style="width:12%">Ne Zaman</th>
+                    </tr>
+                    </thead>
+                    <tbody id="log-body">
+                    <tr><td colspan="7" class="empty">Yükleniyor...</td></tr>
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <span id="page-info">—</span>
+                    <div class="page-btns">
+                        <button class="page-btn" onclick="prevPage()" id="btn-prev">← Önceki</button>
+                        <button class="page-btn" onclick="nextPage()" id="btn-next">Sonraki →</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:14px">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">İşlem Türleri</span></div>
+                    <div class="chart-wrap"><canvas id="chart" height="180"></canvas></div>
+                    <div class="legend" id="legend"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Hızlı Bakış</span></div>
+                    <div style="padding:.85rem 1.25rem;font-size:12px;display:flex;flex-direction:column;gap:8px">
+                        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="color:#64748b">En aktif kullanıcı</span><span style="font-weight:600" id="top-actor">—</span></div>
+                        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="color:#64748b">En çok değişen varlık</span><span style="font-weight:600" id="top-entity">—</span></div>
+                        <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="color:#64748b">En sık işlem</span><span style="font-weight:600" id="top-action">—</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs-content" id="tab-suspicious">
+        <div class="susp-panel">
+            <div class="susp-card">
+                <div class="susp-header">
+                    <h3>⚠️ Şüpheli İşlemler</h3>
+                    <span class="susp-count" id="susp-count">0 kayıt</span>
+                </div>
+                <div class="susp-list" id="susp-list">
+                    <div class="empty">Yükleniyor...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs-content" id="tab-live">
+        <div class="live-log-wrap">
+            <div class="live-log-header">
+                <div class="live-log-title">
+                    <div class="term-dots">
+                        <div class="td-btn td-red"></div>
+                        <div class="td-btn td-amber"></div>
+                        <div class="td-btn td-green"></div>
+                    </div>
+                    AuditTrailX — Canlı Akış
+                </div>
+                <div class="live-badge"><span class="live-dot"></span>Canlı</div>
+            </div>
+            <div class="live-log-body" id="live-body"></div>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="modal">
+    <div class="modal">
+        <div class="modal-top">
+            <h3>İşlem Detayı</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:5119/api';
+    let token = '';
+    let page = 1;
+    let totalPages = 1;
+    let filters = {};
+    let chart = null;
+    let allItems = [];
+    let liveStarted = false;
+    let lastLiveCount = 0;
+
+    // Tek renk sistemi — badge, avatar, grafik, canlı ekran hepsi buradan
+    const ACTION_STYLE = {
+        Login:            { color: '#3b82f6', bg: '#eff6ff', text: '#1d4ed8' }, // mavi
+        Logout:           { color: '#60a5fa', bg: '#eff6ff', text: '#2563eb' }, // açık mavi
+        Created:          { color: '#22c55e', bg: '#f0fdf4', text: '#15803d' }, // yeşil
+        Updated:          { color: '#f59e0b', bg: '#fffbeb', text: '#b45309' }, // amber
+        Deleted:          { color: '#ef4444', bg: '#fff1f2', text: '#b91c1c' }, // kırmızı
+        PasswordChanged:  { color: '#f97316', bg: '#fff7ed', text: '#c2410c' }, // turuncu
+        PermissionChanged:{ color: '#f97316', bg: '#fff7ed', text: '#c2410c' }, // turuncu
+        RoleAssigned:     { color: '#f97316', bg: '#fff7ed', text: '#c2410c' }, // turuncu
+    };
+
+    const ACTION_TR = {
+        Login:'Giriş Yapıldı', Logout:'Çıkış Yapıldı', Created:'Oluşturuldu',
+        Updated:'Güncellendi', Deleted:'Silindi', PermissionChanged:'İzin Değişti',
+        PasswordChanged:'Şifre Değişti', RoleAssigned:'Rol Atandı',
+    };
+
+    function getStyle(actionType) {
+        return ACTION_STYLE[actionType] || { color: '#64748b', bg: '#f8fafc', text: '#475569' };
+    }
+
+    function badge(actionType) {
+        const s = getStyle(actionType);
+        const label = ACTION_TR[actionType] || actionType;
+        return `<span class="badge" style="background:${s.bg};color:${s.text}">${label}</span>`;
+    }
+
+    function avatarStyle(actionType, isSuspicious) {
+        if (isSuspicious) return 'background:#ef4444';
+        return `background:${getStyle(actionType).color}`;
+    }
+
+    function initials(name) {
+        if (!name) return '?';
+        return name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    }
+
+    function fmtDate(d) { return new Date(d).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'2-digit'}); }
+    function fmtFull(d) { return new Date(d).toLocaleString('tr-TR'); }
+    function short(s,n){ if(!s) return '—'; return s.length>n?s.substring(0,n)+'…':s; }
+
+    function switchTab(name, el) {
+        document.querySelectorAll('.tabs-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        el.classList.add('active');
+        if (name === 'live') startLive();
+    }
+
+    async function getToken() {
+        const r = await fetch(`${API}/auth/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: 'admin', password: 'admin123' })
+        });
+        if (!r.ok) throw new Error('Auth failed');
+        token = (await r.json()).token;
+    }
+
+    async function apiFetch(url) {
+        let r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (r.status === 401) { await getToken(); r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } }); }
+        if (!r.ok) throw new Error('Fetch failed');
+        return r.json();
+    }
+
+    function renderRows(items) {
+        if (!items?.length) {
+            document.getElementById('log-body').innerHTML = '<tr><td colspan="7" class="empty">Kayıt bulunamadı.</td></tr>';
+            return;
+        }
+        document.getElementById('log-body').innerHTML = items.map(log => `
+    <tr class="${log.isSuspicious?'susp-row':''}" onclick='openModal(${JSON.stringify(JSON.stringify(log))})'>
+      <td>
+        <div class="actor-cell">
+          <div class="avatar" style="${avatarStyle(log.actionType, log.isSuspicious)}">${initials(log.actorName)}</div>
+          <span style="font-weight:500;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${log.actorName||log.actorId}${log.isSuspicious?' ⚠️':''}</span>
+        </div>
+      </td>
+      <td>${badge(log.actionType)}</td>
+      <td title="${log.entityName}">${short(log.entityName,14)}</td>
+      <td title="${log.entityId}" style="font-family:monospace;font-size:10px;color:#64748b">${short(log.entityId,10)}</td>
+      <td style="font-size:11px;color:#64748b">${log.ipAddress||'—'}</td>
+      <td style="font-family:monospace;font-size:10px;color:#94a3b8" title="${log.correlationId||''}">${short(log.correlationId,12)}</td>
+      <td style="color:#64748b">${fmtDate(log.createdAt)}</td>
+    </tr>
+  `).join('');
+    }
+
+    function renderSuspicious(items) {
+        const susp = items.filter(l => l.isSuspicious);
+        document.getElementById('susp-count').textContent = susp.length + ' kayıt';
+        if (!susp.length) {
+            document.getElementById('susp-list').innerHTML = '<div class="empty" style="color:#16a34a">Şüpheli kayıt bulunamadı ✓</div>';
+            return;
+        }
+        document.getElementById('susp-list').innerHTML = susp.map((log, i) => {
+            const riskPct = Math.max(40, 95 - i * 15);
+            const riskColor = riskPct > 70 ? '#ef4444' : '#f59e0b';
+            const riskText = riskPct > 70 ? '<span class="risk-high">Yüksek</span>' : '<span class="risk-mid">Orta</span>';
+            return `
+      <div class="susp-item" onclick='openModal(${JSON.stringify(JSON.stringify(log))})'>
+        <div class="susp-avatar">${initials(log.actorName)}</div>
+        <div class="susp-info">
+          <div class="susp-name">${log.actorName||log.actorId} <span class="susp-badge">⚠️ Şüpheli</span></div>
+          <div class="susp-detail">${log.entityName} → ${ACTION_TR[log.actionType]||log.actionType} · ${log.ipAddress||'—'}</div>
+          <div class="risk-score">
+            <span class="risk-label">Risk</span>
+            <div class="risk-bar-wrap"><div class="risk-bar" style="width:${riskPct}%;background:${riskColor}"></div></div>
+            ${riskText}
+          </div>
+        </div>
+        <span class="susp-time">${fmtDate(log.createdAt)}</span>
+      </div>
+    `;
+        }).join('');
+    }
+
+    function openModal(jsonStr) {
+        const log = JSON.parse(jsonStr);
+        let oldVal='—', newVal='—';
+        try { oldVal = log.oldValues ? JSON.stringify(JSON.parse(log.oldValues),null,2) : '—'; } catch { oldVal = log.oldValues||'—'; }
+        try { newVal = log.newValues ? JSON.stringify(JSON.parse(log.newValues),null,2) : '—'; } catch { newVal = log.newValues||'—'; }
+        document.getElementById('modal-body').innerHTML = `
+    ${log.isSuspicious ? '<div class="susp-banner">⚠️ Bu kayıt şüpheli olarak işaretlenmiş</div>' : ''}
+    <div class="detail-group">
+      <div class="detail-group-title">Kim Yaptı</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="d-label">Ad Soyad</div><div class="d-value">${log.actorName||'—'}</div></div>
+        <div class="detail-item"><div class="d-label">Actor ID</div><div class="d-value" style="font-family:monospace;font-size:10px">${log.actorId||'—'}</div></div>
+        <div class="detail-item"><div class="d-label">Kullanıcı Tipi</div><div class="d-value">${log.actorType||'—'}</div></div>
+        <div class="detail-item"><div class="d-label">IP Adresi</div><div class="d-value">${log.ipAddress||'—'}</div></div>
+      </div>
+    </div>
+    <div class="detail-group">
+      <div class="detail-group-title">Ne Yapıldı</div>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="d-label">İşlem</div><div class="d-value">${badge(log.actionType)}</div></div>
+        <div class="detail-item"><div class="d-label">Tarih</div><div class="d-value">${fmtFull(log.createdAt)}</div></div>
+        <div class="detail-item"><div class="d-label">Varlık Adı</div><div class="d-value">${log.entityName||'—'}</div></div>
+        <div class="detail-item"><div class="d-label">Varlık ID</div><div class="d-value" style="font-family:monospace;font-size:10px">${log.entityId||'—'}</div></div>
+      </div>
+    </div>
+    <div class="detail-group">
+      <div class="detail-group-title">İstek Bilgisi</div>
+      <div class="detail-grid">
+        <div class="detail-item" style="grid-column:span 2"><div class="d-label">Correlation ID</div><div class="d-value" style="font-family:monospace;font-size:10px">${log.correlationId||'—'}</div></div>
+        <div class="detail-item" style="grid-column:span 2"><div class="d-label">User Agent</div><div class="d-value" style="font-size:10px">${log.userAgent||'—'}</div></div>
+      </div>
+    </div>
+    ${oldVal!=='—'||newVal!=='—' ? `
+    <div class="detail-group">
+      <div class="detail-group-title">Değişiklik Detayı</div>
+      ${oldVal!=='—' ? `<div style="margin-bottom:8px"><div class="d-label" style="margin-bottom:4px">Eski Değer</div><div class="json-block">${oldVal}</div></div>` : ''}
+      ${newVal!=='—' ? `<div><div class="d-label" style="margin-bottom:4px">Yeni Değer</div><div class="json-block" style="color:#86efac">${newVal}</div></div>` : ''}
+    </div>` : ''}
+  `;
+        document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+    document.getElementById('modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+    function renderChart(items) {
+        const counts = {};
+        items.forEach(l => { counts[l.actionType] = (counts[l.actionType]||0)+1; });
+        const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+        const labels = sorted.map(e=>ACTION_TR[e[0]]||e[0]);
+        const data = sorted.map(e=>e[1]);
+        const colors = sorted.map(e=>getStyle(e[0]).color);
+        const max = Math.max(...data);
+
+        if (chart) chart.destroy();
+        const ctx = document.getElementById('chart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#fff', borderWidth: 2 }] },
+            options: { responsive: true, plugins: { legend: { display: false } }, cutout: '68%' }
+        });
+
+        document.getElementById('legend').innerHTML = sorted.map((e,i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${colors[i]}"></div>
+      <span style="flex:1;color:#374151">${ACTION_TR[e[0]]||e[0]}</span>
+      <div class="legend-bar-wrap"><div class="legend-bar" style="width:${Math.round(e[1]/max*100)}%;background:${colors[i]}"></div></div>
+      <span class="legend-count">${e[1]}</span>
+    </div>
+  `).join('');
+    }
+
+    function renderQuickStats(items) {
+        const ac={}, ec={}, ac2={};
+        items.forEach(l => {
+            ac[l.actorName||l.actorId] = (ac[l.actorName||l.actorId]||0)+1;
+            ec[l.entityName] = (ec[l.entityName]||0)+1;
+            ac2[l.actionType] = (ac2[l.actionType]||0)+1;
+        });
+        const top = obj => Object.entries(obj).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+        document.getElementById('top-actor').textContent = top(ac);
+        document.getElementById('top-entity').textContent = top(ec);
+        document.getElementById('top-action').textContent = ACTION_TR[top(ac2)]||top(ac2);
+    }
+
+    function addLiveLine(log, body) {
+        const now = new Date().toLocaleTimeString('tr-TR');
+        const s = getStyle(log.actionType);
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        const suspStr = log.isSuspicious ? '<span class="log-susp"> [ŞÜPHELİ]</span>' : '';
+        line.innerHTML = `<span class="log-time">${now}</span><span class="log-actor">${log.actorName||log.actorId}</span><span style="color:${s.color};min-width:130px">${ACTION_TR[log.actionType]||log.actionType}</span><span class="log-entity">→ ${log.entityName}/${log.entityId}</span>${suspStr}`;
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+        if (body.children.length > 100) body.removeChild(body.firstChild);
+    }
+
+    function addIdleLine(body, minutes) {
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        line.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString('tr-TR')}</span><span class="log-idle">— ${minutes} dakikadır yeni işlem yok —</span>`;
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    function startLive() {
+        if (liveStarted) return;
+        liveStarted = true;
+        const body = document.getElementById('live-body');
+        body.innerHTML = '';
+        if (allItems.length) {
+            [...allItems].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,10).reverse().forEach(log => addLiveLine(log, body));
+            lastLiveCount = allItems.length;
+        }
+        let idleMinutes = 0;
+        setInterval(async () => {
+            try {
+                const data = await apiFetch(`${API}/auditlogs?pageNumber=1&pageSize=100`);
+                const newItems = data.items||[];
+                if (newItems.length > lastLiveCount) {
+                    newItems.slice(0, newItems.length - lastLiveCount).reverse().forEach(log => addLiveLine(log, body));
+                    lastLiveCount = newItems.length;
+                    idleMinutes = 0;
+                } else {
+                    idleMinutes++;
+                    if (idleMinutes % 10 === 0) addIdleLine(body, idleMinutes);
+                }
+            } catch {}
+        }, 30000);
+    }
+
+    async function load() {
+        try {
+            if (!token) await getToken();
+            const q = new URLSearchParams({ pageNumber: page, pageSize: 10, ...filters });
+            const data = await apiFetch(`${API}/auditlogs?${q}`);
+            totalPages = data.totalPages||1;
+            document.getElementById('result-count').textContent = `${data.totalCount} kayıt bulundu`;
+            document.getElementById('page-info').textContent = `Sayfa ${data.pageNumber} / ${data.totalPages}`;
+            document.getElementById('btn-prev').disabled = data.pageNumber<=1;
+            document.getElementById('btn-next').disabled = data.pageNumber>=data.totalPages;
+            renderRows(data.items);
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('tr-TR');
+            document.getElementById('status-text').textContent = 'API Aktif';
+            const all = await apiFetch(`${API}/auditlogs?pageNumber=1&pageSize=1000`);
+            allItems = all.items||[];
+            lastLiveCount = allItems.length;
+            document.getElementById('st-total').textContent = all.totalCount;
+            document.getElementById('st-susp').textContent = allItems.filter(l=>l.isSuspicious).length;
+            document.getElementById('st-unread').textContent = allItems.filter(l=>!l.isRead).length;
+            const now = new Date();
+            document.getElementById('st-today').textContent = allItems.filter(l=>(now-new Date(l.createdAt))<86400000).length;
+            renderChart(allItems);
+            renderQuickStats(allItems);
+            renderSuspicious(allItems);
+        } catch(e) {
+            document.getElementById('status-text').textContent = 'Bağlantı yok';
+            document.getElementById('log-body').innerHTML = '<tr><td colspan="7" class="empty">API\'ye bağlanılamadı. Terminalde <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:monospace">dotnet run</code> çalıştır.</td></tr>';
+            document.getElementById('result-count').textContent = 'bağlantı yok';
+        }
+    }
+
+    function applyFilters() {
+        filters={};
+        const a=document.getElementById('f-actor').value.trim();
+        const e=document.getElementById('f-entity').value.trim();
+        const ac=document.getElementById('f-action').value;
+        const s=document.getElementById('f-susp').value;
+        if(a) filters.actorId=a;
+        if(e) filters.entityName=e;
+        if(ac) filters.actionType=ac;
+        if(s!=='') filters.isSuspicious=s;
+        page=1; load();
+    }
+
+    function resetFilters() {
+        ['f-actor','f-entity'].forEach(id=>document.getElementById(id).value='');
+        ['f-action','f-susp'].forEach(id=>document.getElementById(id).value='');
+        filters={}; page=1; load();
+    }
+
+    function prevPage(){ if(page>1){page--;load();} }
+    function nextPage(){ if(page<totalPages){page++;load();} }
+
+    load();
+</script>
+</body>
+</html>

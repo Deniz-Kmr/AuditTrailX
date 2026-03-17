@@ -416,3 +416,12 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+AuditTrailX.API/appsettings.Development.json
+.DS_Store
